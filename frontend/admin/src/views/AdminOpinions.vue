@@ -8,42 +8,92 @@
         <a href="/admin-opinions" class="active">意见管理</a>
       </div>
 
-      <div class="opinions-list">
-        <div class="opinion-item">
-          <div class="opinion-header">
-            <h3><a href="/detail?id=1">关于改善村道照明的建议</a></h3>
-            <span class="user">村民张三</span>
-            <span class="date">2026-03-18</span>
-          </div>
-          <div class="opinion-content">
-            村道照明不足，晚上出行不安全，建议增加路灯数量，改善照明条件。
-          </div>
-          <div class="opinion-footer">
-            <span class="category">交通</span>
-            <span class="status replied">已回复</span>
-            <a href="/reply?id=1" class="reply-btn">回复</a>
-          </div>
-        </div>
+      <div v-if="loading" class="status-box">加载中...</div>
+      <div v-else-if="error" class="status-box error">{{ error }}</div>
+      <div v-else-if="opinions.length === 0" class="status-box">暂无意见数据</div>
 
-        <div class="opinion-item">
+      <div v-else class="opinions-list">
+        <div v-for="item in opinions" :key="item._id" class="opinion-item">
           <div class="opinion-header">
-            <h3><a href="/detail?id=2">希望加强农村垃圾处理</a></h3>
-            <span class="user">村民李四</span>
-            <span class="date">2026-03-17</span>
+            <h3>
+              <a :href="`/detail/${item._id}`" target="_blank">{{ item.title }}</a>
+            </h3>
+            <span class="user">{{ item.author?.name || '匿名村民' }}</span>
+            <span class="date">{{ formatDate(item.createdAt) }}</span>
           </div>
           <div class="opinion-content">
-            村里垃圾堆积严重，建议增加垃圾收集点，定期清理，改善居住环境。
+            {{ item.content }}
           </div>
           <div class="opinion-footer">
-            <span class="category">环境</span>
-            <span class="status pending">未回复</span>
-            <a href="/reply?id=2" class="reply-btn">回复</a>
+            <span class="category">{{ categoryText(item.category) }}</span>
+            <span :class="['status', item.isReplied ? 'replied' : 'pending']">
+              {{ item.isReplied ? '已回复' : '未回复' }}
+            </span>
+            <button
+              class="reply-btn"
+              type="button"
+              :disabled="operatingId === item._id"
+              @click="goReply(item._id)"
+            >
+              {{ item.isReplied ? '查看回复' : '回复' }}
+            </button>
           </div>
         </div>
       </div>
     </section>
   </main>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import request from '@/utils/request'
+
+const router = useRouter()
+
+const loading = ref(false)
+const error = ref('')
+const operatingId = ref(null)
+const opinions = ref([])
+
+const categoryMap = {
+  environment: '环境',
+  education: '教育',
+  health: '医疗',
+  transportation: '交通',
+  other: '其他',
+}
+
+const categoryText = (value) => categoryMap[value] || '其他'
+
+const formatDate = (value) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN')
+}
+
+const fetchOpinions = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const data = await request.get('/opinions', { params: { limit: 50 } })
+    opinions.value = data.list || []
+  } catch (err) {
+    error.value = '获取意见列表失败'
+    opinions.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const goReply = (id) => {
+  router.push(`/reply/${id}`)
+}
+
+onMounted(() => {
+  fetchOpinions()
+})
+</script>
 
 <style scoped>
 .container {
@@ -111,6 +161,10 @@ h2 {
   text-decoration: none;
 }
 
+.opinion-header h3 a:hover {
+  text-decoration: underline;
+}
+
 .user,
 .date {
   font-size: 13px;
@@ -121,6 +175,10 @@ h2 {
   margin: 12px 0;
   line-height: 1.7;
   color: #344054;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .opinion-footer {
@@ -155,10 +213,32 @@ h2 {
 
 .reply-btn {
   margin-left: auto;
-  text-decoration: none;
+  border: none;
   background: #3a7afe;
   color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.reply-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.reply-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-box {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+}
+
+.status-box.error {
+  color: #d93025;
 }
 </style>

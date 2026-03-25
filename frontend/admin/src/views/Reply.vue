@@ -1,16 +1,80 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import request from '@/utils/request'
 
+const route = useRoute()
+const router = useRouter()
+
+const loading = ref(false)
+const submitting = ref(false)
+const error = ref('')
+
+const opinion = ref<any>(null)
 const replyContent = ref('')
 
-const handleSubmit = () => {
+const categoryMap: Record<string, string> = {
+  environment: '环境',
+  education: '教育',
+  health: '医疗',
+  transportation: '交通',
+  other: '其他',
+}
+
+const categoryText = (value: string) => categoryMap[value] || '其他'
+
+const formatDate = (value: string) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN')
+}
+
+const fetchOpinion = async () => {
+  const id = route.params.id as string
+  if (!id) {
+    error.value = '缺少意见 ID'
+    return
+  }
+
+  loading.value = true
+  try {
+    const data = await request.get(`/opinions/${id}`)
+    opinion.value = data.opinion || null
+  } catch (err) {
+    error.value = '获取意见详情失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSubmit = async () => {
   if (!replyContent.value.trim()) {
     window.alert('请输入回复内容')
     return
   }
 
-  window.alert('回复已提交（示例页面）')
+  const id = route.params.id as string
+  submitting.value = true
+
+  try {
+    await request.post(`/admin/opinions/${id}/reply`, {
+      content: replyContent.value.trim(),
+    })
+    window.alert('回复成功！')
+    router.push('/admin-opinions')
+  } catch (err: any) {
+    window.alert(err?.response?.data?.message || '回复失败')
+  } finally {
+    submitting.value = false
+  }
 }
+
+const handleCancel = () => {
+  router.back()
+}
+
+onMounted(() => {
+  fetchOpinion()
+})
 </script>
 
 <template>
@@ -18,37 +82,42 @@ const handleSubmit = () => {
     <section class="reply-form-page">
       <h2>干部回复</h2>
 
-      <div class="opinion-preview">
-        <h3>关于改善村道照明的建议</h3>
-        <div class="opinion-meta">
-          <span class="user">村民张三</span>
-          <span class="date">2026-03-18</span>
-          <span class="category">交通</span>
-        </div>
-        <div class="opinion-content">
-          <p>
-            村道照明不足，晚上出行不安全，建议增加路灯数量，改善照明条件。特别是村东头的小路，晚上几乎看不见路，老人和孩子出行很危险。希望村委会能够重视这个问题，尽快解决。
-          </p>
-        </div>
-      </div>
+      <div v-if="loading" class="status-box">加载中...</div>
+      <div v-else-if="error" class="status-box error">{{ error }}</div>
 
-      <form class="reply-form" @submit.prevent="handleSubmit">
-        <div class="form-group">
-          <label for="reply-content">回复内容</label>
-          <textarea
-            id="reply-content"
-            v-model="replyContent"
-            rows="8"
-            required
-            placeholder="请输入回复内容"
-          />
+      <template v-else-if="opinion">
+        <div class="opinion-preview">
+          <h3>{{ opinion.title }}</h3>
+          <div class="opinion-meta">
+            <span class="user">{{ opinion.author?.name || '匿名村民' }}</span>
+            <span class="date">{{ formatDate(opinion.createdAt) }}</span>
+            <span class="category">{{ categoryText(opinion.category) }}</span>
+          </div>
+          <div class="opinion-content">
+            <p>{{ opinion.content }}</p>
+          </div>
         </div>
 
-        <div class="form-actions">
-          <a href="/detail?id=1" class="cancel-btn">取消</a>
-          <button type="submit" class="submit-reply">提交回复</button>
-        </div>
-      </form>
+        <form class="reply-form" @submit.prevent="handleSubmit">
+          <div class="form-group">
+            <label for="reply-content">回复内容</label>
+            <textarea
+              id="reply-content"
+              v-model="replyContent"
+              rows="8"
+              required
+              placeholder="请输入回复内容"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" @click="handleCancel">取消</button>
+            <button type="submit" class="submit-reply" :disabled="submitting">
+              {{ submitting ? '提交中...' : '提交回复' }}
+            </button>
+          </div>
+        </form>
+      </template>
     </section>
   </main>
 </template>
@@ -156,8 +225,31 @@ h2 {
   color: #57627a;
 }
 
+.cancel-btn:hover {
+  background: #e5e9f2;
+}
+
 .submit-reply {
   background: #3a7afe;
   color: #fff;
+}
+
+.submit-reply:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submit-reply:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-box {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+}
+
+.status-box.error {
+  color: #d93025;
 }
 </style>

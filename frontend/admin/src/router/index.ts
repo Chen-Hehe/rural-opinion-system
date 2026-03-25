@@ -33,11 +33,23 @@ const router = createRouter({
       component: AdminOpinions,
     },
     {
-      path: '/reply',
+      path: '/reply/:id',
       name: 'reply',
       component: Reply,
+      meta: { requiresAuth: true },
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('admin-user-store')
+  const hasToken = token && JSON.parse(token).token
+
+  if (to.meta.requiresAuth && !hasToken) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router
