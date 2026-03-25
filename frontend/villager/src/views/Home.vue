@@ -33,9 +33,7 @@
         @keyup.enter="goDetail(item._id)"
       >
         <div class="opinion-header">
-          <h3>
           <h3>{{ item.title }}</h3>
-          </h3>
           <span class="user">{{ item.author?.name || '匿名村民' }}</span>
           <span class="date">{{ formatDate(item.createdAt) }}</span>
         </div>
@@ -218,6 +216,12 @@ onMounted(() => {
   border-radius: 10px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.opinion-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
 .opinion-header {
@@ -233,16 +237,6 @@ onMounted(() => {
   font-size: 18px;
   flex: 1;
   min-width: 240px;
-}
-
-.title-link {
-  color: #1f2a37;
-  text-decoration: none;
-}
-
-.title-link:hover {
-  color: #2d8f39;
-  text-decoration: underline;
 }
 
 .user,
