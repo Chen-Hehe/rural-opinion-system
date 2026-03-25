@@ -23,10 +23,18 @@
     <section v-else-if="errorMsg" class="status-box error">{{ errorMsg }}</section>
 
     <section v-else class="opinions-list">
-      <article v-for="item in opinions" :key="item._id" class="opinion-item">
+      <article
+        v-for="item in opinions"
+        :key="item._id"
+        class="opinion-item"
+        role="button"
+        tabindex="0"
+        @click="goDetail(item._id)"
+        @keyup.enter="goDetail(item._id)"
+      >
         <div class="opinion-header">
           <h3>
-            <RouterLink :to="`/detail/${item._id}`" class="title-link">{{ item.title }}</RouterLink>
+          <h3>{{ item.title }}</h3>
           </h3>
           <span class="user">{{ item.author?.name || '匿名村民' }}</span>
           <span class="date">{{ formatDate(item.createdAt) }}</span>
@@ -70,7 +78,10 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import request from '@/utils/request'
+
+const router = useRouter()
 
 const opinions = ref([])
 const loading = ref(false)
@@ -98,6 +109,10 @@ const categoryText = (value) => categoryMap[value] || '其他'
 const formatDate = (value) => {
   if (!value) return '-'
   return new Date(value).toLocaleDateString('zh-CN')
+}
+
+const goDetail = (id) => {
+  router.push(`/detail/${id}`)
 }
 
 const fetchOpinions = async () => {
@@ -198,6 +213,7 @@ onMounted(() => {
 }
 
 .opinion-item {
+  cursor: pointer;
   background: #fff;
   border-radius: 10px;
   padding: 16px;
@@ -217,6 +233,16 @@ onMounted(() => {
   font-size: 18px;
   flex: 1;
   min-width: 240px;
+}
+
+.title-link {
+  color: #1f2a37;
+  text-decoration: none;
+}
+
+.title-link:hover {
+  color: #2d8f39;
+  text-decoration: underline;
 }
 
 .user,
