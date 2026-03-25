@@ -23,8 +23,10 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  console.error('=== Error Details ===');
   console.error(err);
-  res.status(err.status || 500).json({ message: err.message || '服务器内部错误' });
+  console.error('=====================');
+  res.status(err.status || 500).json({ message: err.message || '服务器内部错误', stack: err.stack });
 });
 
 const PORT = process.env.PORT || 3000;

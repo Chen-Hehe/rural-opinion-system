@@ -53,7 +53,7 @@ const replyOpinion = async (req, res) => {
 
     const reply = await Reply.create({
       opinionId: id,
-      officialId: req.user._id,
+      officialId: req.user.userId,
       content,
     });
 

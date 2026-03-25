@@ -71,7 +71,7 @@ const createOpinion = async (req, res) => {
       title,
       content,
       category,
-      author: req.user._id,
+      author: req.user.userId,
     });
 
     return res.status(201).json({
@@ -79,6 +79,7 @@ const createOpinion = async (req, res) => {
       opinion,
     });
   } catch (error) {
+    console.error('createOpinion error:', error);
     return res.status(500).json({ message: '发布失败' });
   }
 };
@@ -86,7 +87,7 @@ const createOpinion = async (req, res) => {
 const toggleLikeOpinion = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id;
+    const userId = req.user.userId;
 
     const opinion = await Opinion.findById(id);
     if (!opinion) {
@@ -125,7 +126,7 @@ const createComment = async (req, res) => {
 
     const comment = await Comment.create({
       opinionId: id,
-      author: req.user._id,
+      author: req.user.userId,
       content,
     });
 
