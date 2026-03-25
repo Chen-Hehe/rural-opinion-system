@@ -4,6 +4,7 @@ import AdminOpinions from '../views/AdminOpinions.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Reply from '../views/Reply.vue'
+import OpinionDetail from '../views/OpinionDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,12 @@ const router = createRouter({
       path: '/reply/:id',
       name: 'reply',
       component: Reply,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/opinion-detail/:id',
+      name: 'opinion-detail',
+      component: OpinionDetail,
       meta: { requiresAuth: true },
     },
   ],
