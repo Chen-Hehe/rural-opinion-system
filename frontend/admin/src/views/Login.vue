@@ -36,19 +36,20 @@ const handleLogin = async () => {
     userStore.setToken(token)
     userStore.setUserInfo(user)
 
-    const userType = user?.userType || user?.role || data?.userType
+    const userType = user?.role
 
-    if (userType === 'villager' || userType === '村民') {
+    if (userType === 'villager') {
+      window.alert('村民账号请前往村民端登录')
       router.push('/')
       return
     }
 
-    if (userType === 'cadre' || userType === '干部') {
-      window.alert('请前往干部端登录')
+    if (userType === 'official') {
+      router.push('/admin')
       return
     }
 
-    router.push('/')
+    router.push('/admin')
   } catch (error: any) {
     window.alert(error?.response?.data?.message || error?.message || '登录失败')
   } finally {
