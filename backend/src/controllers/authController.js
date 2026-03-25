@@ -20,6 +20,9 @@ const register = async (req, res) => {
       return res.status(400).json({ message: '角色参数不合法' });
     }
 
+    // 村民注册需要审核，村干部注册直接通过
+    const status = targetRole === 'villager' ? 'pending' : 'approved';
+
     await User.create({
       username,
       password,
@@ -27,10 +30,14 @@ const register = async (req, res) => {
       phone,
       address,
       role: targetRole,
-      status: 'approved',
+      status,
     });
 
-    return res.status(201).json({ message: '注册成功，可直接登录' });
+    const message = status === 'pending' 
+      ? '注册成功，等待村干部审核' 
+      : '注册成功，可直接登录';
+
+    return res.status(201).json({ message });
   } catch (error) {
     return res.status(500).json({ message: '注册失败' });
   }

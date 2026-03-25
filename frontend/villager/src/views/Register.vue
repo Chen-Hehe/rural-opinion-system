@@ -131,10 +131,10 @@ const handleRegister = async () => {
       role: 'villager',
     })
 
-    successMessage.value = '注册成功，即将跳转到登录页...'
+    successMessage.value = result?.message || '注册成功，等待村干部审核'
     setTimeout(() => {
       router.push('/login')
-    }, 2000)
+    }, 3000)
   } catch (error) {
     errorMessage.value = error?.response?.data?.message || '注册失败，请稍后重试'
   } finally {
