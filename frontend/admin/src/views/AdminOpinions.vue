@@ -16,7 +16,7 @@
         <div v-for="item in opinions" :key="item._id" class="opinion-item">
           <div class="opinion-header">
             <h3>
-              <a :href="`/opinion-detail/${item._id}`" target="_blank">{{ item.title }}</a>
+              <router-link :to="`/opinion-detail/${item._id}`">{{ item.title }}</router-link>
             </h3>
             <span class="user">{{ item.author?.name || '匿名村民' }}</span>
             <span class="date">{{ formatDate(item.createdAt) }}</span>
@@ -38,14 +38,13 @@
             >
               回复
             </button>
-            <a
+            <router-link
               v-else
-              :href="`/opinion-detail/${item._id}`"
-              target="_blank"
+              :to="`/opinion-detail/${item._id}`"
               class="reply-btn view-reply-btn"
             >
               查看回复
-            </a>
+            </router-link>
           </div>
         </div>
       </div>
