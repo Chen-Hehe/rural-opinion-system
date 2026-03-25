@@ -14,14 +14,6 @@
           <input id="login-password" v-model="loginForm.password" type="password" required />
         </div>
 
-        <div class="form-group">
-          <label for="login-user-type">用户类型</label>
-          <select id="login-user-type" v-model="loginForm.role" required>
-            <option value="villager">村民</option>
-            <option value="official">村干部</option>
-          </select>
-        </div>
-
         <div class="form-actions">
           <button id="submit-login" type="submit" :disabled="submitting">
             {{ submitting ? '登录中...' : '登录' }}
@@ -72,14 +64,6 @@
           <input id="register-address" v-model.trim="registerForm.address" type="text" required />
         </div>
 
-        <div class="form-group">
-          <label for="register-user-type">用户类型</label>
-          <select id="register-user-type" v-model="registerForm.role" required>
-            <option value="villager">村民</option>
-            <option value="official">村干部</option>
-          </select>
-        </div>
-
         <div class="form-actions">
           <a href="#" class="cancel-btn" @click.prevent="switchMode(true)">去登录</a>
           <button id="submit-register" type="submit" :disabled="submitting">
@@ -110,7 +94,6 @@ const successMessage = ref('')
 const loginForm = reactive({
   username: '',
   password: '',
-  role: 'villager',
 })
 
 const registerForm = reactive({
@@ -120,7 +103,6 @@ const registerForm = reactive({
   name: '',
   phone: '',
   address: '',
-  role: 'villager',
 })
 
 function switchMode(loginMode: boolean) {
@@ -138,7 +120,6 @@ async function handleLogin() {
     await userStore.login({
       username: loginForm.username,
       password: loginForm.password,
-      role: loginForm.role,
     })
     await router.push('/')
   } catch (error: unknown) {
@@ -168,7 +149,6 @@ async function handleRegister() {
       name: registerForm.name,
       phone: registerForm.phone,
       address: registerForm.address,
-      role: registerForm.role,
     })
 
     successMessage.value = result?.message || '注册成功'
