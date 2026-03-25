@@ -16,7 +16,7 @@
         <div v-for="item in opinions" :key="item._id" class="opinion-item">
           <div class="opinion-header">
             <h3>
-              <a :href="`/detail/${item._id}`" target="_blank">{{ item.title }}</a>
+              <a :href="`http://localhost:5173/detail/${item._id}`" target="_blank">{{ item.title }}</a>
             </h3>
             <span class="user">{{ item.author?.name || '匿名村民' }}</span>
             <span class="date">{{ formatDate(item.createdAt) }}</span>
@@ -40,7 +40,7 @@
             </button>
             <a
               v-else
-              :href="`/detail/${item._id}`"
+              :href="`http://localhost:5173/detail/${item._id}`"
               target="_blank"
               class="reply-btn view-reply-btn"
             >
