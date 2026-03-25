@@ -3,11 +3,6 @@
     <section class="admin-panel">
       <h2>意见管理</h2>
 
-      <div class="admin-nav">
-        <a href="/admin">注册审核</a>
-        <a href="/admin-opinions" class="active">意见管理</a>
-      </div>
-
       <div v-if="loading" class="status-box">加载中...</div>
       <div v-else-if="error" class="status-box error">{{ error }}</div>
       <div v-else-if="opinions.length === 0" class="status-box">暂无意见数据</div>
@@ -120,25 +115,6 @@ onMounted(() => {
 h2 {
   margin: 0 0 16px;
   color: #1f2d3d;
-}
-
-.admin-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.admin-nav a {
-  color: #57627a;
-  text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: #f2f4f8;
-}
-
-.admin-nav a.active {
-  background: #3a7afe;
-  color: #fff;
 }
 
 .opinions-list {
