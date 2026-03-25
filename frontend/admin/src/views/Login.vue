@@ -148,21 +148,20 @@ const goRegister = () => {
 }
 
 .form-input:focus {
-  border-color: #3a7afe;
+  border-color: #4CAF50;
 }
 
 .submit-btn {
   height: 40px;
   border: none;
   border-radius: 8px;
-  background: #3a7afe;
+  background: #4CAF50;
   color: #fff;
   cursor: pointer;
 }
 
-.submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.submit-btn:hover:not(:disabled) {
+  background: #45a049;
 }
 
 .auth-tip {
@@ -174,7 +173,11 @@ const goRegister = () => {
 .link-btn {
   border: none;
   background: transparent;
-  color: #3a7afe;
+  color: #4CAF50;
   cursor: pointer;
+}
+
+.link-btn:hover {
+  color: #45a049;
 }
 </style>
