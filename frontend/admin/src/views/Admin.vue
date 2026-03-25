@@ -8,44 +8,90 @@
         <a href="/admin-opinions">意见管理</a>
       </div>
 
-      <div class="registration-list">
-        <div class="registration-item">
-          <div class="registration-header">
-            <h3>张三</h3>
-            <span class="status pending">待审核</span>
-          </div>
-          <div class="registration-details">
-            <p><strong>用户名：</strong>zhangsan</p>
-            <p><strong>手机号码：</strong>13800138000</p>
-            <p><strong>家庭住址：</strong>东村1组1号</p>
-            <p><strong>注册时间：</strong>2026-03-18 10:00</p>
-          </div>
-          <div class="registration-actions">
-            <button class="approve-btn" type="button">通过</button>
-            <button class="reject-btn" type="button">拒绝</button>
-          </div>
-        </div>
+      <div v-if="loading" class="status-box">加载中...</div>
+      <div v-else-if="error" class="status-box error">{{ error }}</div>
 
-        <div class="registration-item">
+      <div v-else-if="users.length === 0" class="status-box">暂无待审核用户</div>
+
+      <div v-else class="registration-list">
+        <div v-for="user in users" :key="user._id" class="registration-item">
           <div class="registration-header">
-            <h3>李四</h3>
+            <h3>{{ user.name }}</h3>
             <span class="status pending">待审核</span>
           </div>
           <div class="registration-details">
-            <p><strong>用户名：</strong>lisi</p>
-            <p><strong>手机号码：</strong>13900139000</p>
-            <p><strong>家庭住址：</strong>西村2组3号</p>
-            <p><strong>注册时间：</strong>2026-03-18 09:30</p>
+            <p><strong>用户名：</strong>{{ user.username }}</p>
+            <p><strong>手机号码：</strong>{{ user.phone }}</p>
+            <p><strong>家庭住址：</strong>{{ user.address }}</p>
+            <p><strong>注册时间：</strong>{{ formatDate(user.createdAt) }}</p>
           </div>
           <div class="registration-actions">
-            <button class="approve-btn" type="button">通过</button>
-            <button class="reject-btn" type="button">拒绝</button>
+            <button class="approve-btn" type="button" :disabled="operating" @click="handleApprove(user._id)">
+              通过
+            </button>
+            <button class="reject-btn" type="button" :disabled="operating" @click="handleReject(user._id)">
+              拒绝
+            </button>
           </div>
         </div>
       </div>
     </section>
   </main>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import request from '@/utils/request'
+
+const loading = ref(false)
+const error = ref('')
+const operating = ref(false)
+const users = ref([])
+
+const formatDate = (value) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN')
+}
+
+const fetchUsers = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const data = await request.get('/admin/users', { params: { status: 'pending' } })
+    users.value = data.list || []
+  } catch (err) {
+    error.value = '获取用户列表失败'
+    users.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const updateUserStatus = async (userId, status) => {
+  operating.value = true
+  try {
+    await request.put(`/admin/users/${userId}/status`, { status })
+    await fetchUsers()
+  } catch (err) {
+    alert(err?.response?.data?.message || '操作失败')
+  } finally {
+    operating.value = false
+  }
+}
+
+const handleApprove = (userId) => {
+  updateUserStatus(userId, 'approved')
+}
+
+const handleReject = (userId) => {
+  updateUserStatus(userId, 'rejected')
+}
+
+onMounted(() => {
+  fetchUsers()
+})
+</script>
 
 <style scoped>
 .container {
@@ -137,11 +183,34 @@ h2 {
   cursor: pointer;
 }
 
+.registration-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .approve-btn {
   background: #18a058;
 }
 
+.approve-btn:hover:not(:disabled) {
+  background: #148a4a;
+}
+
 .reject-btn {
   background: #d03050;
+}
+
+.reject-btn:hover:not(:disabled) {
+  background: #b02844;
+}
+
+.status-box {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+}
+
+.status-box.error {
+  color: #d93025;
 }
 </style>
