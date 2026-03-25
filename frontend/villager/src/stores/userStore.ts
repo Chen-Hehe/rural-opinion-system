@@ -1,59 +1,80 @@
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-interface UserState {
-  token: string
+interface UserInfo {
+  id: string | number
   username: string
   role: string
+  name: string
+  [key: string]: unknown
 }
 
 const USER_STORAGE_KEY = 'villager-user'
 
-function getInitialState(): UserState {
+function getInitialState() {
   const raw = localStorage.getItem(USER_STORAGE_KEY)
 
   if (!raw) {
     return {
       token: '',
-      username: '',
-      role: '',
+      userInfo: null as UserInfo | null,
     }
   }
 
   try {
-    return JSON.parse(raw) as UserState
+    const parsed = JSON.parse(raw) as {
+      token?: string
+      userInfo?: UserInfo | null
+    }
+
+    return {
+      token: parsed.token ?? '',
+      userInfo: parsed.userInfo ?? null,
+    }
   } catch {
     return {
       token: '',
-      username: '',
-      role: '',
+      userInfo: null as UserInfo | null,
     }
   }
 }
 
-export const useUserStore = defineStore('userStore', {
-  state: (): UserState => getInitialState(),
-  actions: {
-    setUser(payload: UserState) {
-      this.token = payload.token
-      this.username = payload.username
-      this.role = payload.role
-      this.persist()
-    },
-    clearUser() {
-      this.token = ''
-      this.username = ''
-      this.role = ''
-      localStorage.removeItem(USER_STORAGE_KEY)
-    },
-    persist() {
-      localStorage.setItem(
-        USER_STORAGE_KEY,
-        JSON.stringify({
-          token: this.token,
-          username: this.username,
-          role: this.role,
-        }),
-      )
-    },
-  },
+export const useUserStore = defineStore('userStore', () => {
+  const initialState = getInitialState()
+  const token = ref(initialState.token)
+  const userInfo = ref<UserInfo | null>(initialState.userInfo)
+
+  function persist() {
+    localStorage.setItem(
+      USER_STORAGE_KEY,
+      JSON.stringify({
+        token: token.value,
+        userInfo: userInfo.value,
+      }),
+    )
+  }
+
+  function setToken(value: string) {
+    token.value = value
+    persist()
+  }
+
+  function setUserInfo(value: UserInfo | null) {
+    userInfo.value = value
+    persist()
+  }
+
+  function logout() {
+    token.value = ''
+    userInfo.value = null
+    localStorage.removeItem(USER_STORAGE_KEY)
+  }
+
+  return {
+    token,
+    userInfo,
+    setToken,
+    setUserInfo,
+    logout,
+  }
 })
