@@ -30,13 +30,22 @@
               {{ item.isReplied ? '已回复' : '未回复' }}
             </span>
             <button
+              v-if="!item.isReplied"
               class="reply-btn"
               type="button"
               :disabled="operatingId === item._id"
               @click="goReply(item._id)"
             >
-              {{ item.isReplied ? '查看回复' : '回复' }}
+              回复
             </button>
+            <a
+              v-else
+              :href="`/detail/${item._id}`"
+              target="_blank"
+              class="reply-btn view-reply-btn"
+            >
+              查看回复
+            </a>
           </div>
         </div>
       </div>
@@ -221,10 +230,20 @@ h2 {
   cursor: pointer;
   text-decoration: none;
   font-size: 13px;
+  display: inline-block;
+  text-align: center;
+}
+
+.view-reply-btn {
+  background: #4CAF50;
 }
 
 .reply-btn:hover:not(:disabled) {
   background: #2563eb;
+}
+
+.view-reply-btn:hover {
+  background: #45a049;
 }
 
 .reply-btn:disabled {
