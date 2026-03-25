@@ -16,7 +16,11 @@
         <div class="opinion-content">{{ opinion.content }}</div>
 
         <div class="opinion-actions">
-          <span>👍 {{ opinion.likes?.length || 0 }}</span>
+          <button class="like-btn" :disabled="!hasToken || liking" @click="handleLike">
+            <span>👍</span>
+            <span>{{ opinion.likes?.length || 0 }}</span>
+            <span v-if="hasLiked" class="liked-tag">已赞</span>
+          </button>
         </div>
 
         <div class="official-reply">
@@ -38,11 +42,22 @@
         <h3>评论 ({{ comments.length }})</h3>
 
         <div v-if="hasToken" class="comment-form">
-          <textarea placeholder="请输入你的评论..." rows="3" />
-          <div class="tip">已登录，可发表评论（后续可接入提交接口）。</div>
+          <textarea
+            v-model="commentContent"
+            placeholder="请输入你的评论..."
+            rows="3"
+          />
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" @click="commentContent = ''">取消</button>
+            <button type="button" :disabled="submittingComment" @click="handleComment">
+              {{ submittingComment ? '提交中...' : '发表评论' }}
+            </button>
+          </div>
         </div>
 
-        <div v-else class="tip login-tip">登录后可发表评论</div>
+        <div v-else class="tip login-tip">
+          <router-link to="/login">登录后可发表评论</router-link>
+        </div>
 
         <div class="comments-list">
           <div v-if="comments.length === 0" class="empty-text">暂无评论</div>
@@ -71,12 +86,19 @@ const userStore = useUserStore()
 
 const loading = ref(false)
 const errorMsg = ref('')
+const liking = ref(false)
+const submittingComment = ref(false)
 
 const opinion = ref(null)
 const comments = ref([])
 const replies = ref([])
+const commentContent = ref('')
 
 const hasToken = computed(() => Boolean(userStore.token))
+const hasLiked = computed(() => {
+  if (!opinion.value?.likes || !userStore.userInfo?._id) return false
+  return opinion.value.likes.some(id => id === userStore.userInfo._id || id._id === userStore.userInfo._id)
+})
 
 const categoryMap = {
   environment: '环境',
@@ -113,6 +135,51 @@ const fetchDetail = async () => {
     errorMsg.value = '获取意见详情失败'
   } finally {
     loading.value = false
+  }
+}
+
+const handleLike = async () => {
+  if (!hasToken.value) {
+    alert('请先登录')
+    return
+  }
+
+  const id = route.params.id || route.query.id
+  liking.value = true
+
+  try {
+    const data = await request.post(`/opinions/${id}/like`)
+    if (opinion.value) {
+      opinion.value.likes = data.liked 
+        ? [...(opinion.value.likes || []), userStore.userInfo._id]
+        : (opinion.value.likes || []).filter(id => id !== userStore.userInfo._id)
+    }
+  } catch (error) {
+    alert(error?.response?.data?.message || '点赞失败')
+  } finally {
+    liking.value = false
+  }
+}
+
+const handleComment = async () => {
+  if (!commentContent.value.trim()) {
+    alert('请输入评论内容')
+    return
+  }
+
+  const id = route.params.id || route.query.id
+  submittingComment.value = true
+
+  try {
+    const data = await request.post(`/opinions/${id}/comments`, {
+      content: commentContent.value.trim(),
+    })
+    comments.value.push(data.comment)
+    commentContent.value = ''
+  } catch (error) {
+    alert(error?.response?.data?.message || '评论失败')
+  } finally {
+    submittingComment.value = false
   }
 }
 
@@ -172,7 +239,34 @@ h3 {
 
 .opinion-actions {
   margin-top: 12px;
-  color: #666;
+}
+
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.like-btn:hover:not(:disabled) {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.like-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.liked-tag {
+  color: #4caf50;
+  font-size: 12px;
 }
 
 .official-reply {
@@ -199,22 +293,70 @@ h3 {
   margin-bottom: 8px;
 }
 
+.comment-form {
+  margin-bottom: 16px;
+}
+
 .comment-form textarea {
   width: 100%;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 10px;
   resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.form-actions button[type="button"]:first-child {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.form-actions button[type="button"]:first-child:hover {
+  background: #e0e0e0;
+}
+
+.form-actions button[type="button"]:last-child {
+  background: #4caf50;
+  color: #fff;
+}
+
+.form-actions button[type="button"]:last-child:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .tip {
   color: #666;
   font-size: 13px;
-  margin-top: 8px;
 }
 
-.login-tip {
-  margin-bottom: 8px;
+.login-tip a {
+  color: #4caf50;
+  text-decoration: none;
+}
+
+.login-tip a:hover {
+  text-decoration: underline;
 }
 
 .empty-text {
