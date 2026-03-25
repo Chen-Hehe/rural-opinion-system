@@ -2,17 +2,32 @@ import axios from 'axios'
 import router from '@/router'
 import { useUserStore } from '@/stores/userStore'
 
+const TOKEN_STORAGE_KEY = 'token'
+const LEGACY_USER_STORAGE_KEY = 'villager-user'
+
 const service = axios.create({
   baseURL: '/api',
 })
 
 service.interceptors.request.use(
   (config) => {
-    const userStore = useUserStore()
+    let token = localStorage.getItem(TOKEN_STORAGE_KEY)
 
-    if (userStore.token) {
+    if (!token) {
+      const legacyRaw = localStorage.getItem(LEGACY_USER_STORAGE_KEY)
+      if (legacyRaw) {
+        try {
+          const legacyData = JSON.parse(legacyRaw)
+          token = legacyData?.token || ''
+        } catch {
+          token = ''
+        }
+      }
+    }
+
+    if (token) {
       config.headers = config.headers || {}
-      config.headers.Authorization = `Bearer ${userStore.token}`
+      config.headers.Authorization = `Bearer ${token}`
     }
 
     return config

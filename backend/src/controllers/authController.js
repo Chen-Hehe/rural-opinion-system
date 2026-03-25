@@ -6,11 +6,18 @@ const register = async (req, res) => {
   try {
     const { username, password, name, phone, address, role, userType } = req.body;
 
-    const targetRole = userType || role;
+    if (!username || !password || !name || !phone || !address) {
+      return res.status(400).json({ message: '请完整填写注册信息' });
+    }
 
     const existedUser = await User.findOne({ username });
     if (existedUser) {
       return res.status(400).json({ message: '用户名已存在' });
+    }
+
+    const targetRole = role || userType || 'villager';
+    if (!['villager', 'official'].includes(targetRole)) {
+      return res.status(400).json({ message: '角色参数不合法' });
     }
 
     await User.create({
@@ -31,7 +38,11 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { username, password, userType } = req.body;
+    const { username, password, userType, role } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ message: '用户名和密码不能为空' });
+    }
 
     const user = await User.findOne({ username });
     if (!user) {
@@ -43,7 +54,8 @@ const login = async (req, res) => {
       return res.status(401).json({ message: '用户名或密码错误' });
     }
 
-    if (user.role !== userType) {
+    const targetRole = role || userType;
+    if (targetRole && user.role !== targetRole) {
       return res.status(401).json({ message: '用户类型不匹配' });
     }
 
@@ -57,10 +69,8 @@ const login = async (req, res) => {
 
     const token = jwt.sign(
       {
-        _id: user._id,
-        username: user.username,
+        userId: user._id,
         role: user.role,
-        name: user.name,
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
