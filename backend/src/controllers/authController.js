@@ -27,10 +27,10 @@ const register = async (req, res) => {
       phone,
       address,
       role: targetRole,
-      status: 'pending',
+      status: 'approved',
     });
 
-    return res.status(201).json({ message: '注册成功，等待审核' });
+    return res.status(201).json({ message: '注册成功，可直接登录' });
   } catch (error) {
     return res.status(500).json({ message: '注册失败' });
   }
@@ -38,7 +38,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { username, password, userType, role } = req.body;
+    const { username, password } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ message: '用户名和密码不能为空' });
@@ -52,11 +52,6 @@ const login = async (req, res) => {
     const isPasswordMatched = await bcrypt.compare(password, user.password);
     if (!isPasswordMatched) {
       return res.status(401).json({ message: '用户名或密码错误' });
-    }
-
-    const targetRole = role || userType;
-    if (targetRole && user.role !== targetRole) {
-      return res.status(401).json({ message: '用户类型不匹配' });
     }
 
     if (user.status === 'pending') {
